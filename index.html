@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply - Aprende Inglés</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // Configuración de Tailwind CSS para el modo oscuro y colores personalizados.
+        tailwind.config = {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              colors: {
+                dark: {
+                  background: '#0f172a', // slate-900
+                  surface: '#1e293b',    // slate-800
+                  container: '#334155', // slate-700
+                },
+                peach: { // Paleta de color durazno personalizada
+                    '400': '#fdba74', // Tono más claro
+                    '500': '#f97316',
+                }
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        /* --- Estilos Generales --- */
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; overflow-x: hidden; }
+        .hidden { display: none; }
+        .dark body { background-color: var(--tw-colors-dark-background); color: white; }
+
+        /* --- Estilos Pantalla de Carga (Splash Screen) --- */
+        #splash-screen { display: grid; place-items: center; height: 100vh; width: 100vw; background-color: #f8fafc; font-family: 'Poppins', sans-serif; text-align: center; position: fixed; top: 0; left: 0; z-index: 100; transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+        .dark #splash-screen { background-color: #0f172a; }
+        #splash-screen.fade-out { opacity: 0; transform: scale(0.95); pointer-events: none; }
+        .splash-container { display: flex; flex-direction: column; align-items: center; }
+        .logo-container { display: flex; align-items: center; justify-content: center; gap: 1.25rem; }
+        .logo-icon { position: relative; width: 80px; height: 80px; background: linear-gradient(135deg, #a855f7, #6d28d9); border-radius: 28%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(109, 40, 217, 0.2), 0 6px 6px rgba(109, 40, 217, 0.2); transform: scale(0) rotate(-45deg); opacity: 0; }
+        .logo-icon::after { content: ''; position: absolute; bottom: 12px; left: -12px; width: 0; height: 0; border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 20px solid #6d28d9; transform: rotate(40deg); filter: brightness(0.9); }
+        .letter-a { opacity: 0; font-size: 48px; font-weight: 600; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .logo-text { font-size: 64px; font-weight: 600; color: #4c1d95; display: flex; overflow: hidden; }
+        .dark .logo-text { color: #ddd6fe; }
+        .logo-text span { display: block; transform: translateY(100%); opacity: 0; }
+        .intro-text { margin-top: 1.5rem; font-family: 'Inter', sans-serif; font-size: 1.25rem; color: #4b5563; opacity: 0; transform: translateY(20px); animation: fade-in-up 0.6s ease-out 1s forwards; }
+        .dark .intro-text { color: #9ca3af; }
+        #splash-actions { transform: scale(0); animation: pop-in-button 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.4s forwards; }
+        @keyframes pop-in-button { from { transform: scale(0); } to { transform: scale(1); } }
+        .animate .logo-icon { animation: pop-in 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .animate .letter-a { animation: fade-in 0.5s ease-out 0.4s forwards; }
+        .animate .logo-text span { animation: slide-up 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .animate .logo-text span:nth-child(1) { animation-delay: 0.6s; } .animate .logo-text span:nth-child(2) { animation-delay: 0.65s; } .animate .logo-text span:nth-child(3) { animation-delay: 0.7s; } .animate .logo-text span:nth-child(4) { animation-delay: 0.75s; }
+        @keyframes pop-in { from { transform: scale(0) rotate(-45deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0%); opacity: 1; } }
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* --- Estilos Modal de Autenticación --- */
+        #auth-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: grid; place-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        #auth-modal.visible { opacity: 1; pointer-events: auto; }
+        .auth-container { width: 100%; max-width: 400px; padding: 2rem; background-color: white; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: scale(0.95); transition: transform 0.3s ease; position: relative; }
+        #auth-modal.visible .auth-container { transform: scale(1); }
+        .dark .auth-container { background-color: var(--tw-colors-dark-surface); }
+        .auth-form .form-input { width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background-color: #f9fafb; transition: ring 0.2s; }
+        .dark .auth-form .form-input { border-color: #4b5563; background-color: var(--tw-colors-dark-container); }
+        .auth-form .form-input:focus { outline: none; ring: 2px; ring-offset: 2px; ring-indigo-500; }
+        .auth-form .form-submit { width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; color: white; background: linear-gradient(135deg, #a855f7, #6d28d9); transition: transform 0.2s; }
+        .auth-form .form-submit:hover { transform: translateY(-2px); }
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; font-weight: 600; color: #374151; background-color: #fff; border: 1px solid #d1d5db; transition: background-color 0.2s; }
+        .dark .google-btn { background-color: #f9fafb; border-color: #f9fafb; }
+        .google-btn:hover { background-color: #f3f4f6; }
+        .google-btn img { width: 20px; height: 20px; }
+
+        /* --- Estilos de Componentes --- */
+        .gradient-text { background: linear-gradient(to right, #3b82f6, #1d4ed8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .dark .gradient-text { background: linear-gradient(to right, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-logo-btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .header-logo-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #a855f7, #6d28d9); border-radius: 28%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(109, 40, 217, 0.2); position: relative; }
+        .header-logo-icon::after { content: ''; position: absolute; bottom: 6px; left: -6px; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-right: 12px solid #6d28d9; transform: rotate(40deg); filter: brightness(0.9); }
+        .header-logo-icon .letter-a { font-size: 28px; font-weight: 600; color: white; opacity: 1; }
+        .header-logo-text { font-family: 'Poppins', sans-serif; font-size: 2.25rem; font-weight: 600; color: #4c1d95; display: flex; gap: 2px; }
+        .dark .header-logo-text { color: #d1d5db; }
+        .progress-ring { position: relative; width: 60px; height: 60px; }
+        .progress-ring__svg { transform: rotate(-90deg); }
+        .progress-ring__circle { transition: stroke-dashoffset 0.5s ease-out; }
+        .progress-ring__text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; }
+        .audio-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background-color: #e0e7ff; color: #4f46e5; transition: all 0.2s ease; cursor: pointer; }
+        .audio-btn:hover { background-color: #c7d2fe; }
+        .dark .audio-btn { background-color: #312e81; color: #a5b4fc; }
+        .dark .audio-btn:hover { background-color: #4338ca; }
+        .audio-btn.listening { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); } 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); } }
+        .recognition-result { display: inline-flex; align-items: center; margin-top: 4px; font-style: italic; color: #6b7280; padding-left: 1rem; }
+        .dark .recognition-result { color: #9ca3af; }
+        #voice-selection-container { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+        #voice-selection-control { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.2); border-radius: 9999px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); }
+        .dark #voice-selection-control { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .voice-select-btn { position: relative; display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid transparent; border-radius: 9999px; cursor: pointer; background-color: transparent; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #334155; font-weight: 600; }
+        .dark .voice-select-btn { color: #e2e8f0; }
+        .voice-select-btn:not(.disabled):not(.active):hover { background-color: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+        .dark .voice-select-btn:not(.disabled):not(.active):hover { background-color: rgba(255, 255, 255, 0.1); }
+        .voice-select-btn.active { background-color: #a855f7; color: white; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); transform: scale(1.05); }
+        .dark .voice-select-btn.active { background-color: #c084fc; color: #2e1065; box-shadow: 0 4px 15px rgba(192, 132, 252, 0.2); }
+        .voice-select-btn.disabled { cursor: not-allowed; opacity: 0.5; }
+        .voice-select-btn .loader { display: none; width: 20px; height: 20px; border: 2px solid currentColor; border-bottom-color: transparent; border-radius: 50%; animation: rotation 1s linear infinite; }
+        .voice-select-btn.loading .loader { display: inline-block; }
+        .voice-select-btn.loading .voice-icon, .voice-select-btn.loading .voice-select-label { display: none; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Estilos para iconos de feedback de pronunciación --- */
+        .feedback-icon {
+            width: 32px; /* Aumentado de 24px para mejor visibilidad móvil */
+            height: 32px; /* Aumentado de 24px para mejor visibilidad móvil */
+            margin-left: 8px;
+            transform: scale(0);
+            animation: pop-in-icon 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .feedback-icon .check-path {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            animation: draw-check 0.4s ease-out 0.2s forwards;
+        }
+
+        .cross-icon path {
+            stroke-dasharray: 17;
+            stroke-dashoffset: 17;
+            animation: draw-x 0.3s ease-out 0.2s forwards;
+        }
+        
+        @keyframes pop-in-icon {
+            to { transform: scale(1); }
+        }
+        @keyframes draw-check {
+            to { stroke-dashoffset: 0; }
+        }
+        @keyframes draw-x {
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* --- Ajustes responsivos para botones de voz --- */
+        @media (max-width: 640px) {
+            .voice-select-btn { padding: 8px 12px; gap: 4px; }
+            .voice-select-btn .voice-icon { width: 18px; height: 18px; }
+            .voice-select-btn .voice-select-label { font-size: 14px; }
+        }
+        @media (max-width: 380px) {
+            .voice-select-btn .voice-select-label { display: none; }
+            .voice-select-btn { padding: 8px; }
+            #voice-selection-control { gap: 1rem; }
+            #voice-selection-container { justify-content: center; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-background text-gray-800 dark:text-gray-200">
+
+    <!-- Pantalla de Carga Animada con Opciones de Login -->
+    <div id="splash-screen">
+        <div class="splash-container">
+            <div class="logo-container">
+                <div class="logo-icon"><span class="letter-a">A</span></div>
+                <div class="logo-text"><span>p</span><span>p</span><span>l</span><span>y</span></div>
+            </div>
+            <p class="intro-text">Aprende inglés con frases útiles de forma interactiva.</p>
+            
+            <div id="splash-actions" class="mt-10 w-full max-w-xs mx-auto space-y-3">
+                 <button id="splash-login-btn" onclick="window.appLogic.openAuthModal('login')" class="w-full py-3 px-6 text-lg font-semibold text-white bg-orange-400 rounded-full shadow-lg hover:bg-orange-500 transition-transform transform hover:scale-105">Iniciar Sesión</button>
+                 <button id="splash-register-btn" onclick="window.appLogic.openAuthModal('register')" class="w-full py-3 px-6 text-lg font-semibold text-indigo-700 bg-white border-2 border-indigo-200 rounded-full hover:bg-indigo-50 dark:bg-dark-surface dark:text-indigo-300 dark:border-indigo-500 dark:hover:bg-dark-container transition-transform transform hover:scale-105">Crear Cuenta</button>
+                 <button id="enable-mic-btn" onclick="window.appLogic.requestMicPermission()" class="w-full py-3 px-6 text-base font-semibold text-purple-700 bg-purple-100 border-2 border-purple-200 rounded-full hover:bg-purple-200 dark:bg-dark-surface dark:text-purple-300 dark:border-purple-500 dark:hover:bg-dark-container transition-all transform hover:scale-105 flex items-center justify-center">
+                    <i class="fa-solid fa-microphone-slash mr-2"></i> Habilitar Micrófono
+                 </button>
+                 <button id="start-button" onclick="window.authFunctions.continueWithoutAccount()" class="mt-4 text-sm font-medium text-gray-500 dark:text-gray-400 hover:underline">Continuar &rarr;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticación -->
+    <div id="auth-modal" onclick="closeAuthModal(event)">
+        <div class="auth-container">
+            <button onclick="closeAuthModal(event, true)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <i class="fa-solid fa-times fa-lg"></i>
+            </button>
+            <form id="login-form" class="space-y-4 auth-form">
+                <h2 class="text-2xl font-bold text-center mb-4 gradient-text">Iniciar Sesión</h2>
+                <button type="button" class="google-btn" onclick="loginWithGoogle()"><img src="https://www.google.com/favicon.ico" alt="Google icon"><span>Ingresar con Google</span></button>
+                <div class="flex items-center my-4"><hr class="w-full border-gray-300 dark:border-gray-600"><span class="px-2 text-sm text-gray-500">o</span><hr class="w-full border-gray-300 dark:border-gray-600"></div>
+                <div><label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><input type="email" id="login-email" class="form-input" required></div>
+                <div><label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label><input type="password" id="login-password" class="form-input" required></div>
+                <p id="login-error" class="text-red-500 text-sm text-center h-4"></p>
+                <button type="submit" class="form-submit">Entrar</button>
+                <p class="text-center text-sm">¿No tienes cuenta? <button type="button" onclick="toggleAuthForm()" class="font-semibold text-indigo-600 hover:underline">Regístrate</button></p>
+            </form>
+            <form id="register-form" class="hidden space-y-4 auth-form">
+                <h2 class="text-2xl font-bold text-center mb-4 gradient-text">Crear Cuenta</h2>
+                <button type="button" class="google-btn" onclick="loginWithGoogle()"><img src="https://www.google.com/favicon.ico" alt="Google icon"><span>Afiliarse con Google</span></button>
+                <div class="flex items-center my-4"><hr class="w-full border-gray-300 dark:border-gray-600"><span class="px-2 text-sm text-gray-500">o</span><hr class="w-full border-gray-300 dark:border-gray-600"></div>
+                <div><label for="register-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label><input type="text" id="register-name" class="form-input" required></div>
+                <div><label for="register-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><input type="email" id="register-email" class="form-input" required></div>
+                <div><label for="register-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label><input type="password" id="register-password" class="form-input" required></div>
+                <p id="register-error" class="text-red-500 text-sm text-center h-4"></p>
+                <button type="submit" class="form-submit">Registrar</button>
+                <p class="text-center text-sm">¿Ya tienes cuenta? <button type="button" onclick="toggleAuthForm()" class="font-semibold text-indigo-600 hover:underline">Inicia Sesión</button></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contenido Principal de la App -->
+    <div id="app-content" class="hidden container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="flex items-center justify-between mb-4 md:mb-8 relative gap-4">
+            <!-- LOGO CLICKABLE: Este botón ahora lleva a la pantalla de presentación -->
+            <button onclick="window.appLogic.showPresentation()" title="Volver a la presentación" class="header-logo-btn flex-shrink-0 cursor-pointer">
+                <div class="header-logo-icon"><span class="letter-a">A</span></div>
+                <div class="header-logo-text"><span>p</span><span>p</span><span>l</span><span>y</span></div>
+            </button>
+             <!-- Search Bar for Desktop -->
+            <div class="relative flex-grow max-w-md mx-auto hidden md:block">
+                <input type="text" id="search-input" placeholder="Buscar lecciones o categorías..." class="w-full pl-10 pr-4 py-2 rounded-full bg-gray-200 dark:bg-dark-container border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="flex items-center space-x-4 flex-shrink-0">
+                <div id="auth-controls"></div>
+                <button id="theme-toggle" class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 dark:bg-dark-container focus:outline-none"></button>
+            </div>
+        </header>
+        
+        <!-- Search bar for mobile -->
+        <div class="relative mb-8 md:hidden">
+            <input type="text" id="search-input-mobile" placeholder="Buscar lecciones..." class="w-full pl-10 pr-4 py-2 rounded-full bg-gray-200 dark:bg-dark-container border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition">
+            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+        
+        <div id="category-selection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"></div>
+        
+        <!-- Contenedor para la nueva vista de lecciones -->
+        <div id="lessons-view-container" class="hidden">
+            <button onclick="goBackToCategories()" class="mb-4 text-purple-600 dark:text-purple-400 hover:underline font-semibold">&larr; Volver a categorías</button>
+            <h2 id="lessons-title" class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-200"></h2>
+            <div id="lessons-layout" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Columna Izquierda: Lista de Lecciones -->
+                <div id="lessons-list-column" class="lg:col-span-1 space-y-6"></div>
+                <!-- Columna Derecha: Detalle de Lección -->
+                <div id="lesson-detail-column" class="lg:col-span-2"></div>
+            </div>
+        </div>
+
+        <!-- Contenedor para la lección interactiva (pantalla original) -->
+        <div id="lesson-interactive-container" class="hidden bg-white dark:bg-dark-surface p-6 rounded-lg shadow-lg">
+            <button onclick="goBackToLessons()" class="mb-4 text-purple-600 dark:text-purple-400 hover:underline font-semibold">&larr; Volver a lecciones</button>
+            <h2 id="lesson-title-content" class="text-3xl font-bold mb-4"></h2>
+            <img id="lesson-image" src="" alt="Imagen de la lección" class="w-full h-48 object-cover rounded-lg mb-6 shadow-md hidden" onerror="this.onerror=null;this.src='https://placehold.co/800x300/cccccc/ffffff?text=Error+al+cargar+imagen';">
+            
+            <div id="voice-selection-container">
+                <div id="voice-selection-control">
+                    <button id="female-voice-btn" onclick="selectVoice('female')" class="voice-select-btn loading" disabled>
+                        <svg class="voice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"></circle><line x1="12" y1="13" x2="12" y2="21"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+                        <span class="voice-select-label">Femenina</span>
+                        <div class="loader"></div>
+                    </button>
+                    <button id="male-voice-btn" onclick="selectVoice('male')" class="voice-select-btn loading" disabled>
+                        <svg class="voice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="15" r="5"></circle><line x1="12.5" y1="11.5" x2="19" y2="5"></line><polyline points="14 5 19 5 19 10"></polyline></svg>
+                        <span class="voice-select-label">Masculina</span>
+                        <div class="loader"></div>
+                    </button>
+                </div>
+            </div>
+            <div id="global-speed-control" class="flex items-center justify-end mb-4">
+                <label for="global-speed-select" class="text-sm font-medium mr-2">Velocidad Global:</label>
+                <select id="global-speed-select" onchange="setGlobalSpeed(this)" class="bg-gray-200 dark:bg-dark-container text-gray-800 dark:text-gray-200 text-sm rounded py-1 pl-2 pr-8 border border-gray-300 dark:border-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="0.5">Lento</option><option value="0.9" selected>Normal</option><option value="1.2">Rápido</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2 border-b pb-2 border-gray-200 dark:border-dark-container">Dialogue</h3>
+                <div id="lesson-dialogue" class="space-y-4 text-sm md:text-base"></div>
+            </div>
+            <div id="lesson-supplementary-info" class="mt-8"></div>
+            <div id="lesson-completion-control" class="mt-8 pt-6 border-t border-gray-200 dark:border-dark-container"></div>
+        </div>
+    </div>
+
+    <script type="module">
+      // Importar funciones de Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import { 
+          getAuth, 
+          onAuthStateChanged,
+          GoogleAuthProvider,
+          signInWithRedirect,
+          getRedirectResult,
+          signOut,
+          createUserWithEmailAndPassword,
+          signInWithEmailAndPassword,
+          updateProfile,
+          signInAnonymously,
+          signInWithCustomToken
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      
+      // La configuración de Firebase es proporcionada por el entorno de ejecución.
+      const firebaseConfig = typeof __firebase_config !== 'undefined'
+        ? JSON.parse(__firebase_config)
+        : {
+            apiKey: "PON_TU_API_KEY_AQUÍ",
+            authDomain: "PON_TU_AUTH_DOMAIN_AQUÍ",
+            projectId: "PON_TU_PROJECT_ID_AQUÍ",
+            storageBucket: "PON_TU_STORAGE_BUCKET_AQUÍ",
+            messagingSenderId: "PON_TU_MESSAGING_SENDER_ID_AQUÍ",
+            appId: "PON_TU_APP_ID_AQUÍ"
+          };
+
+      // Inicializar Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const googleProvider = new GoogleAuthProvider();
+
+      // Hacer las funciones de autenticación accesibles globalmente
+      window.authFunctions = {
+          loginWithGoogle: async () => {
+              try {
+                  await signInWithRedirect(auth, googleProvider);
+              } catch (error) {
+                  console.error("Error al iniciar la redirección con Google:", error);
+              }
+          },
+          registerUser: async (event) => {
+              event.preventDefault();
+              const name = document.getElementById('register-name').value;
+              const email = document.getElementById('register-email').value;
+              const password = document.getElementById('register-password').value;
+              const errorEl = document.getElementById('register-error');
+              errorEl.textContent = '';
+              try {
+                  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                  await updateProfile(userCredential.user, { displayName: name });
+                  window.appLogic.closeAuthModal({target: {id: ''}}, true);
+                  window.appLogic.showAppContent(); 
+              } catch (error) {
+                  console.error("Error durante el registro:", error);
+                  errorEl.textContent = getFirebaseErrorMessage(error);
+              }
+          },
+          loginUser: async (event) => {
+              event.preventDefault();
+              const email = document.getElementById('login-email').value;
+              const password = document.getElementById('login-password').value;
+              const errorEl = document.getElementById('login-error');
+              errorEl.textContent = '';
+              try {
+                  await signInWithEmailAndPassword(auth, email, password);
+                  window.appLogic.closeAuthModal({target: {id: ''}}, true);
+                  window.appLogic.showAppContent();
+              } catch (error) {
+                  console.error("Error durante el inicio de sesión:", error);
+                  errorEl.textContent = getFirebaseErrorMessage(error);
+              }
+          },
+          logoutUser: async () => {
+              try {
+                  await signOut(auth);
+              } catch (error) {
+                  console.error("Error al cerrar sesión:", error);
+              }
+          },
+          continueWithoutAccount: () => {
+              const appState = window.appLogic.getState();
+              appState.currentUser = {
+                  name: 'Invitado',
+                  uid: 'guest_' + Date.now(),
+                  isAnonymous: true,
+                  photoURL: 'https://i.pravatar.cc/40?u=a042581f4e29026704d'
+              };
+              window.appLogic.updateAuthUI();
+              window.appLogic.showAppContent();
+          }
+      };
+      
+      // --- DATA STORE (COMPLETO) ---
+      const lessonsData = {
+          cotidiana: { title: 'Vida Cotidiana', icon: 'fa-house', style: { bg: 'bg-cyan-100', darkBg: 'dark:bg-cyan-900/50', hoverBg: 'hover:bg-cyan-200', darkHoverBg: 'dark:hover:bg-cyan-800/50', ring: 'focus:ring-cyan-500', text: 'text-cyan-800', progress: 'text-peach-400' }, lessons: [
+              { id: 'c1', title: 'Ordering a Coffee', subtitle: 'Aprende a pedir tu bebida favorita.', image_url: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Barista', text: 'Hi there! What can I get for you today?' }, { speaker: 'Tú', text: 'Hello, I\'d like a large latte, please.' }, { speaker: 'Barista', text: 'Sure thing. Will that be all for you?' }, { speaker: 'Tú', text: 'Yes, that\'s everything. Thanks.' }, { speaker: 'Barista', text: 'Okay, that will be $4.50.' }], dialogue_es: [{ speaker: 'Barista', text: '¡Hola! ¿Qué te traigo hoy?' }, { speaker: 'Tú', text: 'Hola, quisiera un latte grande, por favor.' }, { speaker: 'Barista', text: 'Claro que sí. ¿Eso será todo para ti?' }, { speaker: 'Tú', text: 'Sí, eso es todo. Gracias.' }, { speaker: 'Barista', text: 'Perfecto, serían $4.50.' }], tips: ["<b>I'd like...</b> es una forma más educada y común de decir 'I want' (quiero) al ordenar.", "<b>Sure thing</b> es una respuesta informal y amigable que significa 'claro que sí' o 'por supuesto'.", "<b>Will that be all?</b> es la pregunta estándar para saber si terminaste de ordenar."] },
+              { id: 'c2', title: 'Asking for Directions', subtitle: 'Nunca te pierdas en una ciudad nueva.', image_url: 'https://images.unsplash.com/photo-1528642474498-1af0c17fd8c3?q=80&w=2069&auto=format&fit=crop', dialogue: [{ speaker: 'Tú', text: 'Excuse me, could you tell me how to get to the train station?' }, { speaker: 'Local', text: 'Of course. Go straight ahead for two blocks, then turn left. You can\'t miss it.' }, { speaker: 'Tú', text: 'Is it far from here?' }, { speaker: 'Local', text: 'Not at all, it\'s about a 5-minute walk.' }, { speaker: 'Tú', text: 'Thank you so much!' }], dialogue_es: [{ speaker: 'Tú', text: 'Disculpa, ¿me podrías decir cómo llego a la estación de tren?' }, { speaker: 'Local', text: 'Claro. Sigue derecho por dos cuadras y luego gira a la izquierda. Es imposible perderse.' }, { speaker: 'Tú', text: '¿Está muy lejos de aquí?' }, { speaker: 'Local', text: 'Para nada, está como a 5 minutos caminando.' }, { speaker: 'Tú', text: '¡Muchísimas gracias!' }], tips: ["Empieza con <b>Excuse me</b> para llamar la atención de alguien educadamente.", "<b>You can't miss it</b> es una expresión común para decir que algo es muy fácil de encontrar.", "<b>Not at all</b> es una forma enfática de decir 'no' o 'de ninguna manera'."], phrasal_verbs: [ { verb: 'Get to', definition: 'Llegar a un lugar o destino.' } ] },
+              { id: 'c3', title: 'Making a Reservation', subtitle: 'Reserva una mesa en un restaurante.', image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop', dialogue: [ { speaker: 'Restaurant', text: 'Good evening, "The Corner Bistro". How can I help you?' }, { speaker: 'Tú', text: 'Hi, I\'d like to book a table for two, please.' }, { speaker: 'Restaurant', text: 'Certainly. For what time and date?' }, { speaker: 'Tú', text: 'For this Friday at 8:00 PM.' }, { speaker: 'Restaurant', text: 'Alright. Can I get a name for the booking?' }, { speaker: 'Tú', text: 'Yes, it\'s under the name "Parker".'} ], dialogue_es: [ { speaker: 'Restaurante', text: 'Buenas noches, "The Corner Bistro". ¿Cómo puedo ayudarle?' }, { speaker: 'Tú', text: 'Hola, me gustaría reservar una mesa para dos, por favor.' }, { speaker: 'Restaurante', text: 'Por supuesto. ¿Para qué fecha y hora?' }, { speaker: 'Tú', text: 'Para este viernes a las 8:00 PM.' }, { speaker: 'Restaurante', text: 'Muy bien. ¿A nombre de quién hago la reserva?' }, { speaker: 'Tú', text: 'Sí, a nombre de "Parker".'} ], tips: ["<b>Book a table</b> es otra forma común de decir 'reservar una mesa'.", "<b>Certainly</b> es una respuesta formal y afirmativa, similar a 'of course'.", "<b>Under the name...</b> se usa para indicar a nombre de quién se hace la reserva."], phrasal_verbs: [ { verb: 'Book for', definition: 'Reservar para una fecha u hora específica.'} ] },
+              { id: 'c4', title: 'Talking About Hobbies', subtitle: 'Comparte tus pasatiempos e intereses.', image_url: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?q=80&w=2073&auto=format&fit=crop', dialogue: [ { speaker: 'Amigo/a', text: 'So, what do you like to do in your free time?' }, { speaker: 'Tú', text: 'Well, I\'m really into hiking. I try to go every weekend.' }, { speaker: 'Amigo/a', text: 'That sounds fun! I usually just hang out with friends.' }, { speaker: 'Tú', text: 'That\'s cool too. We should catch up sometime.' } ], dialogue_es: [ { speaker: 'Amigo/a', text: 'Y, ¿qué te gusta hacer en tu tiempo libre?' }, { speaker: 'Tú', text: 'Bueno, me gusta mucho el senderismo. Intento ir todos los fines de semana.' }, { speaker: 'Amigo/a', text: '¡Suena divertido! Yo normalmente paso el rato con amigos.' }, { speaker: 'Tú', text: 'Eso también es genial. Deberíamos ponernos al día alguna vez.' } ], tips: ["<b>Be into something</b> significa que algo te gusta mucho o te interesa.", "<b>Free time</b> o <b>spare time</b> se refieren al tiempo libre.", "<b>Sometime</b> se usa para un momento no especificado en el futuro."], phrasal_verbs: [ { verb: 'Hang out', definition: 'Pasar el rato o socializar de manera informal.' }, { verb: 'Catch up', definition: 'Ponerse al día con alguien con quien no has hablado en un tiempo.' } ] } ] },
+          profesional: { title: 'Vida Profesional', icon: 'fa-briefcase', style: { bg: 'bg-indigo-100', darkBg: 'dark:bg-indigo-900/50', hoverBg: 'hover:bg-indigo-200', darkHoverBg: 'dark:hover:bg-indigo-800/50', ring: 'focus:ring-indigo-500', text: 'text-indigo-800', progress: 'text-peach-400' }, lessons: [
+              { id: 'p1', title: 'A Professional Introduction', subtitle: 'Preséntate con confianza en el trabajo.', image_url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop', dialogue: [{ speaker: 'Manager', text: 'Everyone, I\'d like to introduce our new Marketing Specialist, Alex.' }, { speaker: 'Alex (Tú)', text: 'Hello everyone. It\'s a pleasure to meet you all. I\'m looking forward to working with you.' }, { speaker: 'Colleague', text: 'Welcome to the team, Alex! We\'re glad to have you.' }], dialogue_es: [{ speaker: 'Jefe/a', text: 'Equipo, quiero presentarles a nuestro/a nuevo/a Especialista de Marketing, Alex.' }, { speaker: 'Alex (Tú)', text: 'Hola a todos. Un placer conocerlos. Estoy con muchas ganas de trabajar con ustedes.' }, { speaker: 'Colega', text: '¡Bienvenido/a al equipo, Alex! Qué bueno tenerte aquí.' }], tips: ["<b>I'd like to introduce...</b> es la frase estándar y formal para presentar a alguien.", "<b>We're glad to have you</b> es una forma cálida y profesional de dar la bienvenida a alguien."], phrasal_verbs: [ { verb: 'Look forward to', definition: 'Esperar algo con entusiasmo o ilusión.' } ] },
+              { id: 'p2', title: 'Writing a Formal Email', subtitle: 'Comunica de forma clara y profesional.', image_url: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Subject', text: 'Meeting Follow-up' }, { speaker: 'Body', text: 'Dear Mr. Smith, Thank you for your time today. As discussed, I have attached the project proposal for your review. Please do not hesitate to reach out if you have any questions. Best regards, Jane Doe.' }], dialogue_es: [{ speaker: 'Asunto', text: 'Seguimiento de reunión' }, { speaker: 'Cuerpo', text: 'Estimado Sr. Smith, Gracias por su tiempo el día de hoy. Como conversamos, adjunto la propuesta del proyecto para su revisión. Por favor, no dude en contactarme si tiene alguna pregunta. Atentamente, Jane Doe.' }], tips: ["Usa <b>Dear Mr./Ms. [Apellido]</b> para un saludo formal.", "<b>As discussed</b> (como conversamos) es útil para referirse a una conversación previa."], phrasal_verbs: [ { verb: 'Follow up', definition: 'Dar seguimiento a un asunto o conversación previa.' }, { verb: 'Reach out', definition: 'Contactar o comunicarse con alguien.' } ] },
+              { id: 'p3', title: 'Participating in a Meeting', subtitle: 'Comparte tus ideas de forma efectiva.', image_url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop', 
+                dialogue: [ 
+                    { speaker: 'Tú', text: 'Can everyone hear me?' },
+                    { speaker: 'Tú', text: 'I\'ll share my screen.' },
+                    { speaker: 'Jefe/a', text: 'Let\'s kick off the meeting. What are your thoughts on the new campaign?' }, 
+                    { speaker: 'Tú', text: 'If I could jump in, I think we should focus on social media.' }, 
+                    { speaker: 'Colega', text: 'I agree with that. We need to build on our online presence.' }, 
+                    { speaker: 'Tú', text: 'Exactly. I can put together a proposal with some ideas.' },
+                    { speaker: 'Tú', text: 'Let\'s circle back to this later.' }
+                ], 
+                dialogue_es: [ 
+                    { speaker: 'Tú', text: '¿Todos pueden oírme?' },
+                    { speaker: 'Tú', text: 'Compartiré mi pantalla.' },
+                    { speaker: 'Jefe/a', text: 'Empecemos la reunión. ¿Qué opinan sobre la nueva campaña?' }, 
+                    { speaker: 'Tú', text: 'Si me permiten, creo que deberíamos enfocarnos en las redes sociales.' }, 
+                    { speaker: 'Colega', text: 'Estoy de acuerdo con eso. Necesitamos fortalecer nuestra presencia en línea.' }, 
+                    { speaker: 'Tú', text: 'Exacto. Puedo preparar una propuesta con algunas ideas.' },
+                    { speaker: 'Tú', text: 'Volvamos a esto más tarde.' }
+                ], 
+                tips: ["<b>Thoughts on...</b> es una forma de preguntar la opinión de alguien.", "<b>Jump in</b> es una manera informal de interrumpir educadamente para dar tu opinión.", "<b>Build on</b> significa desarrollar o mejorar algo que ya existe.", "<b>Circle back</b> significa volver a un tema más tarde."], 
+                phrasal_verbs: [ { verb: 'Kick off', definition: 'Empezar o iniciar algo (una reunión, un proyecto).' }, { verb: 'Put together', definition: 'Preparar, organizar o ensamblar algo.' }, { verb: 'Circle back', definition: 'Volver a discutir un tema en un momento posterior.' } ] },
+              { id: 'p4', title: 'Asking for Time Off', subtitle: 'Solicita días libres de manera profesional.', image_url: 'https://images.unsplash.com/photo-1562564055-71e051d33c19?q=80&w=2070&auto=format&fit=crop', dialogue: [ { speaker: 'Tú', text: 'Hi, I\'d like to request some time off next month.' }, { speaker: 'Manager', text: 'Okay. How many days are you thinking of?' }, { speaker: 'Tú', text: 'I was hoping to take off the last week of the month, from the 24th to the 28th.' }, { speaker: 'Manager', text: 'Let me check the team calendar. It looks like we can sort that out. Please fill out the official request form.' } ], dialogue_es: [ { speaker: 'Tú', text: 'Hola, me gustaría solicitar unos días libres el próximo mes.' }, { speaker: 'Jefe/a', text: 'De acuerdo. ¿Cuántos días estás pensando?' }, { speaker: 'Tú', text: 'Esperaba tomarme la última semana del mes, del 24 al 28.' }, { speaker: 'Jefe/a', text: 'Déjame revisar el calendario del equipo. Parece que podemos arreglarlo. Por favor, llena el formulario de solicitud oficial.' } ], tips: ["<b>Time off</b> es el término general para referirse a tiempo libre del trabajo (vacaciones, días personales, etc.).", "<b>Take off</b> es la acción de no ir a trabajar por un período.", "<b>Fill out</b> significa completar un formulario."], phrasal_verbs: [ { verb: 'Sort out', definition: 'Resolver un problema o encontrar una solución.' }, { verb: 'Fill out', definition: 'Completar un formulario con información.' } ] } ] },
+          viajes: { title: 'Inglés para Viajes', icon: 'fa-plane-departure', style: { bg: 'bg-teal-100', darkBg: 'dark:bg-teal-900/50', hoverBg: 'hover:bg-teal-200', darkHoverBg: 'dark:hover:bg-teal-800/50', ring: 'focus:ring-teal-500', text: 'text-teal-800', progress: 'text-peach-400' }, lessons: [
+              { id: 'v1', title: 'At the Airport', subtitle: 'Frases clave para el check-in y seguridad.', image_url: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Agent', text: 'Good morning. Passport and ticket, please.' }, { speaker: 'Tú', text: 'Here you are.' }, { speaker: 'Agent', text: 'Have you packed this luggage yourself?' }, { speaker: 'Tú', text: 'Yes, I did.' }, { speaker: 'Agent', text: 'Great. Your gate is B24. Have a nice flight!' }], dialogue_es: [{ speaker: 'Agente', text: 'Buenos días. Pasaporte y boleto de avión, por favor.' }, { speaker: 'Tú', text: 'Aquí tiene.' }, { speaker: 'Agente', text: '¿Usted mismo/a empacó su maleta?' }, { speaker: 'Tú', text: 'Sí, yo la empaqué.' }, { speaker: 'Agente', text: 'Perfecto. Su puerta de embarque es la B24. ¡Que tenga un buen viaje!' }], tips: ["<b>Here you are</b> o <b>Here you go</b> se usan al entregar algo a alguien.", "En el aeropuerto, siempre te preguntarán si empacaste tu propio equipaje por seguridad.", "<b>Gate</b> se refiere a la puerta de embarque."], phrasal_verbs: [ { verb: 'Check in', definition: 'Registrarse (en un aeropuerto u hotel).' } ] },
+              { id: 'v2', title: 'At the Hotel', subtitle: 'Cómo registrarse y pedir ayuda.', image_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Receptionist', text: 'Good evening. Do you have a reservation with us?' }, { speaker: 'Tú', text: 'Yes, I have a reservation under the name Smith.' }, { speaker: 'Receptionist', text: 'Perfect. Here is your room key. Enjoy your stay.' }, { speaker: 'Tú', text: 'Thank you. Is there Wi-Fi in the room?' }, { speaker: 'Receptionist', text: 'Yes, the network and password are on the key card sleeve.' }], dialogue_es: [{ speaker: 'Recepcionista', text: 'Buenas noches. ¿Tiene una reservación?' }, { speaker: 'Tú', text: 'Sí, a nombre de Smith.' }, { speaker: 'Recepcionista', text: 'Perfecto. Aquí tiene la tarjeta de su cuarto. Disfrute su estadía.' }, { speaker: 'Tú', 'text': 'Gracias. ¿Hay Wi-Fi disponible?' }, { speaker: 'Recepcionista', text: 'Sí, la clave está en el sobre de la tarjeta.' }], tips: ["Usa la frase <b>under the name [Apellido]</b> para indicar a nombre de quién está la reservación.", "<b>Key card</b> es la tarjeta que funciona como llave.", "<b>Sleeve</b> es la fundita o sobre de papel donde viene la tarjeta."] },
+              { id: 'v3', title: 'Ordering at a Restaurant', subtitle: 'Pide tu comida como un local.', image_url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop', 
+                dialogue: [ 
+                    { speaker: 'Tú', text: 'A table for two, please.' },
+                    { speaker: 'Tú', text: 'Can I see the menu?' },
+                    { speaker: 'Waiter', text: 'Are you ready to order, or do you need a few more minutes?' }, 
+                    { speaker: 'Tú', text: 'I think we\'re ready. I\'ll have the steak, please.' }, 
+                    { speaker: 'Waiter', text: 'Excellent choice. And how would you like that cooked?' }, 
+                    { speaker: 'Tú', text: 'Medium rare, please. And could we also get some water for the table?' } 
+                ], 
+                dialogue_es: [ 
+                    { speaker: 'Tú', text: 'Una mesa para dos, por favor.' },
+                    { speaker: 'Tú', text: '¿Puedo ver el menú?' },
+                    { speaker: 'Camarero', text: '¿Están listos para ordenar o necesitan unos minutos más?' }, 
+                    { speaker: 'Tú', text: 'Creo que estamos listos. Yo tomaré el filete, por favor.' }, 
+                    { speaker: 'Camarero', text: 'Excelente elección. ¿Y cómo le gustaría que estuviera cocido?' }, 
+                    { speaker: 'Tú', text: 'Término medio, por favor. ¿Y podría traernos agua para la mesa?' } 
+                ], 
+                tips: ["<b>I'll have...</b> es una forma muy común y directa de ordenar comida.", "Los términos de cocción de la carne más comunes son: <b>rare</b> (rojo), <b>medium rare</b> (rojo-rosado), <b>medium</b> (rosado), <b>medium well</b> (ligeramente rosado), y <b>well-done</b> (bien cocido).", "<b>Could we get...</b> es una forma educada de pedir algo para compartir en la mesa."], },
+              { id: 'v4', title: 'Dealing with Lost Luggage', subtitle: 'Qué decir si tu equipaje no aparece.', image_url: 'https://images.pexels.com/photos/5989933/pexels-photo-5989933.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2', 
+                dialogue: [ 
+                    { speaker: 'Tú', text: 'Excuse me, my baggage hasn\'t come out on the carousel.' }, 
+                    { speaker: 'Tú', text: 'Where is the lost and found office?' },
+                    { speaker: 'Airline Staff', text: 'I\'m sorry to hear that. Can I see your baggage claim ticket?' }, 
+                    { speaker: 'Tú', text: 'Yes, here it is. It\'s a large, blue suitcase.' }, 
+                    { speaker: 'Airline Staff', text: 'Okay, we need to fill out a report. We will track it down and deliver it to your address.' } 
+                ], 
+                dialogue_es: [ 
+                    { speaker: 'Tú', text: 'Disculpe, mi equipaje no ha salido en la cinta.' }, 
+                    { speaker: 'Tú', text: '¿Dónde está la oficina de objetos perdidos?' },
+                    { speaker: 'Personal', text: 'Lamento oír eso. ¿Puedo ver su talón de equipaje?' }, 
+                    { speaker: 'Tú', text: 'Sí, aquí está. Es una maleta grande y azul.' }, 
+                    { speaker: 'Personal', text: 'De acuerdo, necesitamos llenar un reporte. Lo rastrearemos y lo enviaremos a su dirección.' } 
+                ], 
+                tips: ["<b>Baggage</b> o <b>luggage</b> son sinónimos para equipaje.", "<b>Carousel</b> o <b>baggage claim</b> es la cinta donde recoges las maletas.", "<b>Baggage claim ticket</b> es el talón o recibo que te dan al documentar tu equipaje."], 
+                phrasal_verbs: [ { verb: 'Come out', definition: 'Salir o aparecer.' }, { verb: 'Track down', definition: 'Rastrear y encontrar algo o a alguien después de una búsqueda.' } ] } ] },
+          finanzas: { title: 'Términos Financieros', icon: 'fa-chart-line', style: { bg: 'bg-yellow-100', darkBg: 'dark:bg-yellow-900/50', hoverBg: 'hover:bg-yellow-200', darkHoverBg: 'dark:hover:bg-yellow-800/50', ring: 'focus:ring-yellow-500', text: 'text-yellow-800', progress: 'text-peach-400' }, lessons: [
+              { id: 'f1', title: 'Opening a Bank Account', subtitle: 'Frases clave para trámites bancarios.', image_url: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Tú', text: 'Good morning, I would like to open an account, please.' }, { speaker: 'Banker', text: 'Certainly. I can help with that. Do you prefer a basic account or one with more features?' }, { speaker: 'Tú', text: 'A basic account will be fine. What documents do I need to provide?' }, { speaker: 'Banker', text: 'I will need a valid form of ID and a proof of address.' }, { speaker: 'Tú', text: 'Of course. Here is my passport and a recent utility bill.' }], dialogue_es: [{ speaker: 'Tú', text: 'Buenos días, quisiera abrir una cuenta, por favor.' }, { speaker: 'Ejecutivo/a', text: 'Claro que sí. ¿Prefiere una cuenta básica o una con más beneficios?' }, { speaker: 'Tú', text: 'Una básica está bien. ¿Qué documentos necesito?' }, { speaker: 'Ejecutivo/a', text: 'Necesito una identificación oficial y un comprobante de domicilio.' }, { speaker: 'Tú', text: 'Aquí tiene mi pasaporte y un recibo de luz.' }], tips: ["<b>Checking account</b> es una cuenta corriente para uso diario.", "<b>Proof of address</b> es un documento que prueba dónde vives, como un recibo de servicios (<b>utility bill</b>).", "<b>ID</b> es la abreviatura de 'Identification Document' (documento de identidad)."] },
+              { id: 'f2', title: 'Investing Fundamentals', subtitle: 'Comprende los conceptos básicos de inversión.', image_url: 'https://images.unsplash.com/photo-1624996379697-f01d168b1a52?q=80&w=2070&auto=format&fit=crop', dialogue: [{ speaker: 'Advisor', text: 'Welcome. To get started, could you tell me about your investment goals?' }, { speaker: 'Tú', text: 'I\'m a beginner, so I\'d like to learn about the fundamentals, like stocks and bonds.' }, { speaker: 'Advisor', text: 'Excellent. Stocks represent ownership in a company, while bonds are essentially loans to an entity.' }, { speaker: 'Tú', text: 'I see. And could you explain diversification?' }, { speaker: 'Advisor', text: 'Diversification is key to managing risk. In simple terms, it means not putting all your eggs in one basket.' }], dialogue_es: [{ speaker: 'Asesor/a', text: 'Bienvenido. Para empezar, ¿podría contarme cuáles son sus objetivos de inversión?' }, { speaker: 'Tú', text: 'Soy principiante, por lo que me gustaría aprender sobre los fundamentos, como acciones y bonos.' }, { speaker: 'Asesor/a', text: 'Excelente. Las acciones representan la propiedad de una empresa, mientras que los bonos son esencialmente préstamos a una entidad.' }, { speaker: 'Tú', text: 'Entiendo ¿Y podrías explicar la diversificación?' }, { speaker: 'Asesor/a', text: 'La diversificación es clave para gestionar el riesgo. En términos simples, significa no poner todos los huevos en la misma canasta.' }], tips: ["<b>Stocks</b> (acciones) y <b>Bonds</b> (bonos) son los dos tipos de inversión más comunes.", "<b>Risk</b> (riesgo) es un concepto fundamental en finanzas.", "La frase <b>'not putting all your eggs in one basket'</b> es un dicho popular que significa no arriesgarlo todo en una sola cosa."] },
+              { id: 'f3', title: 'Discussing a Bill', subtitle: 'Aclara dudas sobre un estado de cuenta.', image_url: 'https://images.unsplash.com/photo-1579621970795-87facc2f976d?q=80&w=2070&auto=format&fit=crop', dialogue: [ { speaker: 'Tú', text: 'Hello, I\'m calling about my credit card statement. I think there might be an error.' }, { speaker: 'Agent', text: 'I can certainly look into that for you. What is the charge you are questioning?' }, { speaker: 'Tú', text: 'There\'s a charge for $50 from a store I don\'t recognize.' }, { speaker: 'Agent', text: 'I see. We will investigate the charge. It may take a few business days to sort it out.' } ], dialogue_es: [ { speaker: 'Tú', text: 'Hola, llamo por mi estado de cuenta de la tarjeta de crédito. Creo que podría haber un error.' }, { speaker: 'Agente', text: 'Claro, puedo investigarlo. ¿Cuál es el cargo que está cuestionando?' }, { speaker: 'Tú', text: 'Hay un cargo de $50 de una tienda que no reconozco.' }, { speaker: 'Agent', text: 'Entiendo. Investigaremos el cargo. Puede tomar unos días hábiles resolverlo.' } ], tips: ["<b>Statement</b> es el estado de cuenta.", "<b>Charge</b> es un cargo o cobro a tu cuenta.", "<b>Business days</b> se refiere a los días laborables (generalmente de lunes a viernes)."], phrasal_verbs: [ { verb: 'Look into', definition: 'Investigar o examinar un problema.' }, { verb: 'Sort out', definition: 'Resolver un problema o una situación confusa.' } ] },
+              { id: 'f4', title: 'Talking About Savings', subtitle: 'Conversa sobre tus metas de ahorro.', image_url: 'https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=2070&auto=format&fit=crop', dialogue: [ { speaker: 'Amigo/a', text: 'I\'m trying to save up for a new car.' }, { speaker: 'Tú', text: 'That\'s a great goal! Are you setting aside money each month?' }, { speaker: 'Amigo/a', text: 'Yes, I\'m trying to cut back on eating out to save more.' }, { speaker: 'Tú', text: 'Good idea. Every little bit adds up.' } ], dialogue_es: [ { speaker: 'Amigo/a', text: 'Estoy intentando ahorrar para un auto nuevo.' }, { speaker: 'Tú', text: '¡Es una gran meta! ¿Estás apartando dinero cada mes?' }, { speaker: 'Amigo/a', text: 'Sí, estoy tratando de reducir las comidas fuera para ahorrar más.' }, { speaker: 'Tú', text: 'Buena idea. Todo suma.' } ], tips: ["<b>Goal</b> significa meta u objetivo.", "<b>Eating out</b> se refiere a comer en restaurantes.", "<b>Every little bit adds up</b> es una expresión que significa que pequeñas cantidades se acumulan con el tiempo."], phrasal_verbs: [ { verb: 'Save up (for)', definition: 'Ahorrar dinero para un propósito específico.' }, { verb: 'Set aside', definition: 'Guardar o reservar algo (generalmente dinero) para el futuro.' }, { verb: 'Cut back (on)', definition: 'Reducir el consumo o gasto en algo.' } ] } ] }
+      };
+      
+      // --- ESTADO Y LÓGICA DE LA APP ---
+      window.appLogic = (() => {
+          const appState = { 
+              currentUser: null,
+              currentCategory: null, 
+              currentLessonId: null,
+              selectedLessonId: null,
+              isSpeaking: false, 
+              currentVoiceGender: 'female', 
+              currentVoiceObject: null,
+              voicesLoaded: false,
+              micPermissionGranted: false
+          };
+          
+          // --- SELECTORES DE ELEMENTOS DEL DOM ---
+          const splashScreen = document.getElementById('splash-screen');
+          const startButton = document.getElementById('start-button');
+          const splashLoginBtn = document.getElementById('splash-login-btn');
+          const splashRegisterBtn = document.getElementById('splash-register-btn');
+          const appContent = document.getElementById('app-content');
+          const authModal = document.getElementById('auth-modal');
+          const loginForm = document.getElementById('login-form');
+          const registerForm = document.getElementById('register-form');
+          const categorySelection = document.getElementById('category-selection');
+          const lessonsViewContainer = document.getElementById('lessons-view-container');
+          const lessonsTitle = document.getElementById('lessons-title');
+          const lessonsListColumn = document.getElementById('lessons-list-column');
+          const lessonDetailColumn = document.getElementById('lesson-detail-column');
+          const lessonInteractiveContainer = document.getElementById('lesson-interactive-container');
+          const themeToggleBtn = document.getElementById('theme-toggle');
+          const authControls = document.getElementById('auth-controls');
+          const searchInput = document.getElementById('search-input');
+          const searchInputMobile = document.getElementById('search-input-mobile');
+          
+          let globalSpeechSpeed = 0.9;
+          let femaleVoice = null;
+          let maleVoice = null;
+
+          // --- MANEJO DE VISTAS Y MODAL ---
+          function showPresentation() {
+              appContent.classList.add('hidden');
+              splashScreen.classList.remove('hidden', 'fade-out');
+              splashScreen.style.opacity = 1;
+              splashScreen.style.transform = 'scale(1)';
+              const container = document.querySelector('.splash-container');
+              container.classList.remove('animate');
+              void container.offsetWidth; 
+              container.classList.add('animate');
+          }
+          
+          function showAppContent() {
+              splashScreen.classList.add('fade-out');
+              setTimeout(() => {
+                  splashScreen.classList.add('hidden');
+                  appContent.classList.remove('hidden');
+                  goHome(); 
+                  updateCategoryStats();
+                  if (!appState.voicesLoaded) loadVoices();
+              }, 500); 
+          }
+
+          function openAuthModal(formType = 'login') {
+              authModal.classList.add('visible');
+              loginForm.classList.toggle('hidden', formType !== 'login');
+              registerForm.classList.toggle('hidden', formType !== 'register');
+          }
+
+          function closeAuthModal(event, forceClose = false) {
+              if (forceClose || event.target.id === 'auth-modal') {
+                  authModal.classList.remove('visible');
+              }
+          }
+          
+          function toggleAuthForm() {
+              loginForm.classList.toggle('hidden');
+              registerForm.classList.toggle('hidden');
+              document.getElementById('login-error').textContent = '';
+              document.getElementById('register-error').textContent = '';
+          }
+          
+          // --- UI DE AUTENTICACIÓN ---
+          function updateAuthUI() {
+              const user = appState.currentUser;
+
+              if (user) { // Cubre tanto a usuarios registrados como anónimos
+                  const isGuest = user.isAnonymous;
+                  const photoURL = isGuest 
+                      ? 'https://i.pravatar.cc/40?u=a042581f4e29026704d' // Avatar de invitado por defecto
+                      : user.photoURL || 'https://i.pravatar.cc/40?u=a042581f4e29026704d'; // Avatar del usuario o por defecto
+                  const displayName = isGuest ? 'Invitado' : user.name || 'Usuario';
+
+                  const menuItems = isGuest
+                      ? `
+                          <button onclick="window.appLogic.openAuthModal('login')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-surface">Iniciar Sesión</button>
+                          <button onclick="window.appLogic.openAuthModal('register')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-surface">Crear Cuenta</button>
+                        `
+                      : `
+                          <button onclick="window.authFunctions.logoutUser()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-surface">Cerrar Sesión</button>
+                        `;
+
+                  authControls.innerHTML = `
+                      <div class="relative">
+                          <button onclick="document.getElementById('user-menu').classList.toggle('hidden')" class="flex items-center space-x-2 text-sm font-medium">
+                              <img src="${photoURL}" class="w-8 h-8 rounded-full object-cover" alt="User photo" onerror="this.onerror=null;this.src='https://placehold.co/32x32/9ca3af/ffffff?text=U';">
+                              <span class="hidden sm:inline">${displayName}</span>
+                              <i class="fa-solid fa-caret-down text-xs"></i>
+                          </button>
+                          <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-container rounded-md shadow-lg py-1 z-50">
+                              ${menuItems}
+                          </div>
+                      </div>`;
+
+              } else { // Este caso ocurre antes de cualquier inicio de sesión (invitado o registrado)
+                  authControls.innerHTML = `<button onclick="window.appLogic.openAuthModal('login')" class="px-4 py-2 text-sm font-semibold bg-orange-400 text-white rounded-full hover:bg-orange-500 transition shadow-md">Iniciar Sesión</button>`;
+              }
+          }
+          
+          // --- NAVEGACIÓN ---
+          function goHome() {
+              appState.currentCategory = null;
+              categorySelection.classList.remove('hidden');
+              lessonsViewContainer.classList.add('hidden');
+              lessonInteractiveContainer.classList.add('hidden');
+              searchInput.value = '';
+              searchInputMobile.value = '';
+              renderCategoryCards();
+          }
+
+          function goBackToCategories() {
+              appState.currentCategory = null;
+              lessonsViewContainer.classList.add('hidden');
+              lessonInteractiveContainer.classList.add('hidden');
+              categorySelection.classList.remove('hidden');
+              searchInput.value = '';
+              searchInputMobile.value = '';
+              renderCategoryCards();
+          }
+
+          function goBackToLessons() {
+              lessonInteractiveContainer.classList.add('hidden');
+              lessonsViewContainer.classList.remove('hidden');
+              if (speechSynthesis.speaking) speechSynthesis.cancel();
+          }
+
+          // --- LÓGICA DE LECCIONES Y PROGRESO ---
+          function getCompletedLessonsKey() {
+              return appState.currentUser ? `completedLessons_${appState.currentUser.uid}` : 'completedLessons_guest';
+          }
+
+          function loadCompletedLessons() {
+              return JSON.parse(localStorage.getItem(getCompletedLessonsKey())) || [];
+          }
+
+          function toggleLessonComplete(lessonId) {
+              const key = getCompletedLessonsKey();
+              let completedLessons = loadCompletedLessons();
+              if (completedLessons.includes(lessonId)) {
+                  completedLessons = completedLessons.filter(id => id !== lessonId);
+              } else {
+                  completedLessons.push(lessonId);
+              }
+              localStorage.setItem(key, JSON.stringify(completedLessons));
+              
+              if(!lessonInteractiveContainer.classList.contains('hidden')) {
+                  renderCompletionControl(lessonId);
+              }
+              renderLessonList();
+              renderLessonDetail();
+              updateCategoryStats();
+          }
+
+          function renderCategoryCards(filter = '') {
+              categorySelection.innerHTML = '';
+              const lowerCaseFilter = filter.toLowerCase();
+              let found = false;
+              Object.keys(lessonsData).forEach(key => {
+                  const category = lessonsData[key];
+                  if (category.title.toLowerCase().includes(lowerCaseFilter)) {
+                      found = true;
+                      const card = document.createElement('button');
+                      // Se usan las clases de estilo definidas en el objeto de datos
+                      card.className = `category-card flex flex-col items-center justify-center gap-2 ${category.style.bg} ${category.style.darkBg} ${category.style.text} dark:text-white font-semibold py-4 px-6 rounded-lg shadow-md ${category.style.hoverBg} ${category.style.darkHoverBg} focus:outline-none focus:ring-2 ${category.style.ring} focus:ring-opacity-50 transition duration-300`;
+                      card.onclick = () => showLessonsView(key);
+                      card.innerHTML = `
+                          <div class="progress-ring" id="progress-${key}">
+                              <svg class="progress-ring__svg" width="60" height="60">
+                                <circle class="text-gray-300 dark:text-gray-600" stroke="currentColor" stroke-width="6" fill="transparent" r="27" cx="30" cy="30"/>
+                                <circle class="progress-ring__circle ${category.style.progress}" stroke="currentColor" stroke-width="6" fill="transparent" r="27" cx="30" cy="30" style="stroke-dasharray: 169.65; stroke-dashoffset: 169.65;"/>
+                              </svg>
+                              <div class="progress-ring__text"><i class="fa-solid ${category.icon} text-xl"></i></div>
+                          </div>
+                          <span>${category.title}</span>
+                          <div id="stats-text-${key}" class="text-xs font-medium text-gray-600 dark:text-gray-400">0 / ${category.lessons.length}</div>`;
+                      categorySelection.appendChild(card);
+                  }
+              });
+              if (!found) {
+                  categorySelection.innerHTML = `<p class="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">No se encontraron categorías.</p>`;
+              }
+              updateCategoryStats();
+          }
+
+          function updateCategoryStats() {
+              const completedLessons = loadCompletedLessons();
+              Object.keys(lessonsData).forEach(key => {
+                  const category = lessonsData[key];
+                  const total = category.lessons.length;
+                  const completed = completedLessons.filter(id => id.startsWith(key.charAt(0))).length;
+                  const percentage = total > 0 ? (completed / total) : 0;
+                  const ring = document.querySelector(`#progress-${key} .progress-ring__circle`);
+                  const text = document.querySelector(`#stats-text-${key}`);
+                  const iconContainer = document.querySelector(`#progress-${key} .progress-ring__text`);
+                  if (ring && text) {
+                      const circumference = 2 * Math.PI * ring.r.baseVal.value;
+                      ring.style.strokeDashoffset = circumference - percentage * circumference;
+                      text.textContent = `${completed} / ${total}`;
+                      iconContainer.innerHTML = (percentage === 1) ? `<i class="fa-solid fa-check text-xl text-green-500"></i>` : `<i class="fa-solid ${category.icon} text-xl"></i>`;
+                  }
+              });
+          }
+
+          function findLessonById(lessonId) {
+              for (const categoryKey in lessonsData) {
+                  const lesson = lessonsData[categoryKey].lessons.find(l => l.id === lessonId);
+                  if (lesson) return { lesson, categoryKey };
+              }
+              return null;
+          }
+
+          // --- VISTA DE LECCIONES ---
+          function showLessonsView(categoryKey) {
+              appState.currentCategory = categoryKey;
+              const category = lessonsData[categoryKey];
+              const firstLessonId = category.lessons.length > 0 ? category.lessons[0].id : null;
+              appState.selectedLessonId = firstLessonId;
+
+              categorySelection.classList.add('hidden');
+              lessonInteractiveContainer.classList.add('hidden');
+              lessonsViewContainer.classList.remove('hidden');
+              
+              lessonsTitle.innerHTML = `Your Lessons <span class="block text-xl font-medium text-gray-500 dark:text-gray-400 mt-1">${category.title}</span>`;
+              
+              searchInput.value = '';
+              searchInputMobile.value = '';
+              renderLessonList();
+              renderLessonDetail();
+          }
+          
+          function selectLesson(lessonId) {
+              appState.selectedLessonId = lessonId;
+              renderLessonList(searchInput.value); // Mantiene el filtro de búsqueda
+              renderLessonDetail();
+          }
+
+          function renderLessonList(filter = '') {
+              const category = lessonsData[appState.currentCategory];
+              const completedLessons = loadCompletedLessons();
+              const lowerCaseFilter = filter.toLowerCase();
+
+              const filteredLessons = category.lessons.filter(lesson =>
+                  lesson.title.toLowerCase().includes(lowerCaseFilter) ||
+                  lesson.subtitle.toLowerCase().includes(lowerCaseFilter)
+              );
+
+              if (filteredLessons.length === 0) {
+                  lessonsListColumn.innerHTML = `<div class="text-center text-gray-500 dark:text-gray-400 p-8 bg-gray-50 dark:bg-dark-surface rounded-lg col-span-full">No se encontraron lecciones para "${filter}".</div>`;
+                  lessonDetailColumn.innerHTML = '';
+                  return;
+              }
+
+              lessonsListColumn.innerHTML = filteredLessons.map(lesson => {
+                  const isSelected = lesson.id === appState.selectedLessonId;
+                  const isCompleted = completedLessons.includes(lesson.id);
+                  return `
+                      <div 
+                          class="bg-white dark:bg-dark-surface rounded-2xl shadow-md overflow-hidden transition-all duration-300 cursor-pointer ${isSelected ? 'ring-4 ring-purple-500' : 'hover:shadow-xl'}"
+                          onclick="window.appLogic.selectLesson('${lesson.id}')"
+                      >
+                          <div class="relative">
+                              <img src="${lesson.image_url}" alt="${lesson.title}" class="object-cover w-full h-40" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/ffffff?text=Imagen+no+encontrada';">
+                              <div class="absolute top-2 right-2 bg-black/50 text-white text-xs font-semibold px-2 py-1 rounded-full backdrop-blur-sm">~${lesson.dialogue.length * 2} min</div>
+                              ${isCompleted ? `<div class="absolute p-2 bg-green-500 rounded-full bottom-2 left-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>` : ''}
+                          </div>
+                          <div class="p-4">
+                              <p class="text-sm font-semibold text-purple-600 dark:text-purple-400">${category.title}</p>
+                              <h3 class="text-lg font-bold text-gray-800 dark:text-gray-200">${lesson.title}</h3>
+                              <p class="text-sm text-gray-500 dark:text-gray-400">${lesson.subtitle}</p>
+                          </div>
+                      </div>
+                  `;
+              }).join('');
+
+              if (!filteredLessons.some(l => l.id === appState.selectedLessonId)) {
+                  appState.selectedLessonId = filteredLessons.length > 0 ? filteredLessons[0].id : null;
+                  renderLessonList(filter);
+                  renderLessonDetail();
+              }
+          }
+
+          function renderLessonDetail() {
+              if (!appState.selectedLessonId) {
+                  lessonDetailColumn.innerHTML = `<div class="flex items-center justify-center h-full text-gray-500 bg-gray-50 dark:bg-dark-surface rounded-2xl"><p>Selecciona una lección para ver los detalles.</p></div>`;
+                  return;
+              }
+              const { lesson } = findLessonById(appState.selectedLessonId);
+              const category = lessonsData[appState.currentCategory];
+              
+              lessonDetailColumn.innerHTML = `
+                  <div class="flex flex-col h-full bg-white dark:bg-dark-surface rounded-2xl shadow-lg overflow-hidden">
+                      <div class="relative">
+                          <img src="${lesson.image_url}" alt="${lesson.title}" class="object-cover w-full h-56" onerror="this.onerror=null;this.src='https://placehold.co/600x300/cccccc/ffffff?text=Imagen+no+encontrada';">
+                          <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                          <div class="absolute bottom-0 left-0 p-6">
+                              <h2 class="text-3xl font-bold text-white">${lesson.title}</h2>
+                              <p class="text-purple-300">${category.title} - ${lesson.subtitle}</p>
+                          </div>
+                      </div>
+                      <div class="flex-grow p-6 overflow-y-auto">
+                          <div class="mb-6 pb-6 border-b border-gray-200 dark:border-dark-container">
+                               <button class="w-full flex items-center justify-center gap-2 py-3 px-4 text-lg font-bold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-transform transform hover:scale-105" onclick="window.appLogic.startInteractiveLesson('${lesson.id}')">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                                  Empezar Lección
+                              </button>
+                          </div>
+                          <h4 class="mb-4 text-xl font-semibold text-gray-800 dark:text-gray-200">Diálogo</h4>
+                          <ul class="space-y-3">
+                              ${lesson.dialogue.map((line, index) => `
+                                  <li class="p-4 transition-colors duration-200 bg-gray-100 dark:bg-dark-container rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40">
+                                      <p class="font-semibold text-gray-700 dark:text-gray-300">${line.text}</p>
+                                      <p class="text-purple-700 dark:text-purple-400">${lesson.dialogue_es[index].text}</p>
+                                  </li>
+                              `).join('')}
+                          </ul>
+                      </div>
+                  </div>
+              `;
+          }
+
+          // --- LECCIÓN INTERACTIVA ---
+          function startInteractiveLesson(lessonId) {
+              const result = findLessonById(lessonId);
+              if (!result) return;
+              const { lesson } = result;
+              
+              appState.currentLessonId = lessonId;
+              lessonsViewContainer.classList.add('hidden');
+              lessonInteractiveContainer.classList.remove('hidden');
+              
+              document.getElementById('lesson-title-content').textContent = lesson.title;
+              const lessonImage = document.getElementById('lesson-image');
+              if (lesson.image_url) {
+                  lessonImage.src = lesson.image_url;
+                  lessonImage.alt = lesson.title;
+                  lessonImage.classList.remove('hidden');
+              } else {
+                  lessonImage.classList.add('hidden');
+              }
+              renderDialogue(lesson.dialogue, lesson.dialogue_es);
+              renderSupplementaryInfo(lesson);
+              renderCompletionControl(lesson.id);
+              updateVoiceSelectionUI();
+          }
+
+          function renderDialogue(dialogue_en, dialogue_es) {
+              const container = document.getElementById('lesson-dialogue');
+              container.innerHTML = dialogue_en.map((line, index) => `
+                  <div class="bg-gray-50 dark:bg-dark-container p-4 rounded-lg flex items-start space-x-4 shadow-sm transition-colors duration-200 hover:bg-purple-100 dark:hover:bg-purple-900/40">
+                      <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-sm font-bold text-blue-600 dark:text-blue-200">${line.speaker.charAt(0)}</div>
+                      <div class="flex-grow">
+                          <div class="flex items-center justify-between">
+                              <span class="font-bold text-lg">${line.speaker}</span>
+                              <button class="audio-btn" onclick="window.appLogic.speakTextByIndex(${index})"><i class="fa-solid fa-volume-high"></i></button>
+                          </div>
+                          <p class="text-gray-800 dark:text-gray-200 mt-1">${line.text}</p>
+                          <p class="text-gray-500 dark:text-gray-400 text-sm italic">${dialogue_es[index].text}</p>
+                          <div class="flex items-center mt-2">
+                             <button class="audio-btn mr-2 record-btn" onclick="window.appLogic.startSpeechRecognition(this, '${line.text.replace(/'/g, "\\'")}')"><i class="fa-solid fa-microphone"></i></button>
+                             <span class="recognition-result"></span>
+                          </div>
+                      </div>
+                  </div>`).join('');
+          }
+
+          function renderSupplementaryInfo(lesson) {
+              const container = document.getElementById('lesson-supplementary-info');
+              container.innerHTML = ''; 
+              if (lesson.tips && lesson.tips.length > 0) {
+                  container.innerHTML += `<div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-lg"><h3 class="text-lg font-semibold mb-2 text-indigo-800 dark:text-indigo-200 flex items-center"><i class="fa-solid fa-lightbulb mr-2"></i>Notas y Tips</h3><ul class="space-y-2 list-disc list-inside text-indigo-700 dark:text-indigo-300 pl-2">${lesson.tips.map(tip => `<li>${tip}</li>`).join('')}</ul></div>`;
+              }
+              if (lesson.phrasal_verbs && lesson.phrasal_verbs.length > 0) {
+                  container.innerHTML += `<div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg mt-4"><h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-200 flex items-center"><i class="fa-solid fa-puzzle-piece mr-2"></i>Verbos Frasales</h3><ul class="space-y-2 text-green-700 dark:text-green-300 pl-2">${lesson.phrasal_verbs.map(pv => `<li><b>${pv.verb}:</b> ${pv.definition}</li>`).join('')}</ul></div>`;
+              }
+          }
+
+          function renderCompletionControl(lessonId) {
+              const container = document.getElementById('lesson-completion-control');
+              if (!container) return;
+              const completedLessons = loadCompletedLessons();
+              const isCompleted = completedLessons.includes(lessonId);
+              container.innerHTML = `
+                  <label class="flex items-center justify-center cursor-pointer p-4 bg-gray-100 dark:bg-dark-container rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                      <input type="checkbox" class="form-checkbox h-5 w-5 text-purple-600 rounded focus:ring-purple-500" onchange="window.appLogic.toggleLessonComplete('${lessonId}')" ${isCompleted ? 'checked' : ''}>
+                      <span class="ml-3 text-md text-gray-700 dark:text-gray-300 font-medium">Marcar lección como completada</span>
+                  </label>
+              `;
+          }
+          
+          function setGlobalSpeed(selectElement) { globalSpeechSpeed = parseFloat(selectElement.value); }
+
+          // --- LÓGICA DE VOCES Y RECONOCIMIENTO ---
+          function speakText(textToSpeak) {
+              if (!textToSpeak) return;
+              if (speechSynthesis.speaking) {
+                  speechSynthesis.cancel();
+              }
+              setTimeout(() => {
+                  const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                  utterance.lang = 'en-US';
+                  utterance.rate = globalSpeechSpeed;
+                  if (appState.currentVoiceObject) {
+                      utterance.voice = appState.currentVoiceObject;
+                  } else {
+                      console.warn("Voz no seleccionada, usando la predeterminada.");
+                  }
+                  utterance.onerror = (event) => {
+                      if (event.error !== 'interrupted') {
+                          console.error('Error de SpeechSynthesisUtterance:', event.error);
+                      }
+                  };
+                  speechSynthesis.speak(utterance);
+              }, 50);
+          }
+
+          function speakTextByIndex(index) {
+              const result = findLessonById(appState.currentLessonId);
+              if (result && result.lesson.dialogue[index]) {
+                  const textToSpeak = result.lesson.dialogue[index].text;
+                  speakText(textToSpeak);
+              }
+          }
+
+          function loadVoices() {
+              function populateVoiceList() {
+                  const voices = speechSynthesis.getVoices();
+                  if (voices.length === 0 && appState.voicesLoaded === false) {
+                      return;
+                  }
+                  appState.voicesLoaded = true;
+                  const femaleBtn = document.getElementById('female-voice-btn');
+                  const maleBtn = document.getElementById('male-voice-btn');
+
+                  const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+                  if (englishVoices.length > 0) {
+                      const preferredFemaleNames = ['Puck', 'Kore', 'Ava', 'Samantha', 'Tessa', 'Zoe', 'Google US English', 'Susan'];
+                      const preferredMaleNames = ['Gacrux', 'Charon', 'Algenib', 'David', 'Mark', 'Aaron', 'Google UK English Male', 'Daniel'];
+                      
+                      femaleVoice = englishVoices.find(v => preferredFemaleNames.some(name => v.name.includes(name))) || englishVoices.find(v => /female/i.test(v.name));
+                      maleVoice = englishVoices.find(v => preferredMaleNames.some(name => v.name.includes(name)) && (!femaleVoice || v.name !== femaleVoice.name)) || englishVoices.find(v => /male/i.test(v.name) && (!femaleVoice || v.name !== femaleVoice.name));
+                  }
+
+                  femaleBtn.classList.remove('loading');
+                  maleBtn.classList.remove('loading');
+                  
+                  if (femaleVoice) { femaleBtn.disabled = false; } else { femaleBtn.style.display = 'none'; }
+                  if (maleVoice) { maleBtn.disabled = false; } else { maleBtn.style.display = 'none'; }
+                  
+                  if (!femaleVoice && !maleVoice) { 
+                      document.getElementById('voice-selection-container').style.display = 'none'; 
+                  } else { 
+                      document.getElementById('voice-selection-container').style.display = 'flex'; 
+                  }
+
+                  selectVoice(localStorage.getItem('preferredVoice') || 'female');
+              }
+
+              populateVoiceList();
+              if (speechSynthesis.onvoiceschanged !== undefined) {
+                  speechSynthesis.onvoiceschanged = populateVoiceList;
+              }
+          }
+          
+          function selectVoice(gender) {
+              if (gender === 'female' && femaleVoice) { appState.currentVoiceObject = femaleVoice; appState.currentVoiceGender = 'female'; } 
+              else if (gender === 'male' && maleVoice) { appState.currentVoiceObject = maleVoice; appState.currentVoiceGender = 'male'; } 
+              else { appState.currentVoiceObject = femaleVoice || maleVoice; appState.currentVoiceGender = femaleVoice ? 'female' : 'male'; }
+              localStorage.setItem('preferredVoice', appState.currentVoiceGender);
+              updateVoiceSelectionUI();
+          }
+
+          function updateVoiceSelectionUI() {
+              document.getElementById('female-voice-btn')?.classList.toggle('active', appState.currentVoiceGender === 'female');
+              document.getElementById('male-voice-btn')?.classList.toggle('active', appState.currentVoiceGender === 'male');
+          }
+          
+          async function startSpeechRecognition(button, originalText) {
+              const resultContainer = button.parentElement.querySelector('.recognition-result');
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              
+              if (!SpeechRecognition) {
+                  resultContainer.textContent = 'Reconocimiento no soportado.';
+                  return;
+              }
+
+              if (!appState.micPermissionGranted) {
+                  try {
+                      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                      appState.micPermissionGranted = true;
+                      updateMicButtonUI(true); // Actualiza el botón de la pantalla de bienvenida
+                      stream.getTracks().forEach(track => track.stop());
+                  } catch (err) {
+                      console.error("Error al solicitar permiso del micrófono:", err);
+                      resultContainer.textContent = 'Permiso de micrófono denegado.';
+                      updateMicButtonUI(false, 'Permiso denegado'); // Actualiza el botón
+                      return;
+                  }
+              }
+
+              const recognition = new SpeechRecognition();
+              recognition.lang = 'en-US';
+              recognition.interimResults = false;
+              
+              button.classList.add('listening');
+              resultContainer.textContent = 'Escuchando...';
+              
+              recognition.onresult = (event) => {
+                  const transcript = event.results[0][0].transcript;
+                  const normalizeText = (text) => text.toLowerCase().replace(/[.,!?;']/g, '').trim();
+                  const isCorrect = normalizeText(transcript) === normalizeText(originalText);
+                  
+                  const successIcon = `
+                    <svg viewBox="0 0 24 24" fill="none" class="feedback-icon text-green-500">
+                      <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+                      <path class="check-path" d="M7 13l3 3 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+                  
+                  const errorIcon = `
+                    <svg viewBox="0 0 24 24" fill="none" class="feedback-icon text-red-500 cross-icon">
+                       <circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="1.5" opacity="0.2"/>
+                       <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>`;
+
+                  resultContainer.innerHTML = `<span>"${transcript}"</span> ${isCorrect ? successIcon : errorIcon}`;
+              };
+              
+              recognition.onerror = (event) => {
+                  if (event.error === 'no-speech') {
+                      resultContainer.textContent = 'Intenta de nuevo.';
+                  } else {
+                      resultContainer.textContent = `Error: ${event.error}. Intenta de nuevo.`;
+                  }
+              };
+              
+              recognition.onend = () => {
+                  button.classList.remove('listening');
+              };
+              
+              recognition.start();
+          }
+
+          function handleSearch() {
+              const searchTerm = searchInput.value;
+              searchInputMobile.value = searchTerm;
+              if (appState.currentCategory) {
+                  renderLessonList(searchTerm);
+                  renderLessonDetail();
+              } else {
+                  renderCategoryCards(searchTerm);
+              }
+          }
+
+          function handleSearchMobile() {
+              const searchTerm = searchInputMobile.value;
+              searchInput.value = searchTerm;
+              if (appState.currentCategory) {
+                  renderLessonList(searchTerm);
+                  renderLessonDetail();
+              } else {
+                  renderCategoryCards(searchTerm);
+              }
+          }
+          
+          function updateMicButtonUI(granted, message = '') {
+            const micButton = document.getElementById('enable-mic-btn');
+            if (!micButton) return;
+
+            micButton.disabled = granted;
+            if (granted) {
+                micButton.innerHTML = `<i class="fa-solid fa-microphone mr-2"></i> Micrófono Habilitado`;
+                micButton.classList.remove('bg-purple-100', 'hover:bg-purple-200', 'dark:bg-dark-surface', 'dark:hover:bg-dark-container', 'text-purple-700', 'dark:text-purple-300');
+                micButton.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300', 'cursor-not-allowed');
+            } else {
+                 micButton.innerHTML = `<i class="fa-solid fa-microphone-slash mr-2"></i> ${message || 'Habilitar Micrófono'}`;
+                 micButton.disabled = false;
+                 micButton.classList.remove('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300', 'cursor-not-allowed', 'bg-red-100', 'text-red-700');
+                 micButton.classList.add('bg-purple-100', 'hover:bg-purple-200', 'dark:bg-dark-surface', 'dark:hover:bg-dark-container', 'text-purple-700', 'dark:text-purple-300');
+                 if (message.includes('denegado')) {
+                    micButton.classList.remove('bg-purple-100', 'text-purple-700');
+                    micButton.classList.add('bg-red-100', 'text-red-700');
+                 }
+            }
+          }
+
+          async function requestMicPermission() {
+            const micButton = document.getElementById('enable-mic-btn');
+            if (!micButton || appState.micPermissionGranted) return;
+
+            micButton.disabled = true;
+            micButton.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Solicitando...`;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                appState.micPermissionGranted = true;
+                stream.getTracks().forEach(track => track.stop());
+                console.log("Permiso de micrófono concedido.");
+                updateMicButtonUI(true, 'Permiso concedido');
+            } catch (err) {
+                console.error("Error al solicitar permiso del micrófono:", err);
+                appState.micPermissionGranted = false;
+                updateMicButtonUI(false, 'Permiso denegado');
+            }
+          }
+          
+          async function checkInitialMicPermission() {
+            if (navigator.permissions) {
+                try {
+                    const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                    appState.micPermissionGranted = permissionStatus.state === 'granted';
+                    updateMicButtonUI(appState.micPermissionGranted);
+                    permissionStatus.onchange = () => {
+                        appState.micPermissionGranted = (permissionStatus.state === 'granted');
+                        updateMicButtonUI(permissionStatus.state === 'granted');
+                    };
+                } catch (error) {
+                    console.warn("No se pudo verificar el estado del permiso del micrófono:", error);
+                    updateMicButtonUI(false);
+                }
+            }
+          }
+
+          // --- INICIALIZACIÓN ---
+          function initializeApp() {
+              document.querySelector('.splash-container').classList.add('animate');
+              loginForm.addEventListener('submit', window.authFunctions.loginUser);
+              registerForm.addEventListener('submit', window.authFunctions.registerUser);
+              themeToggleBtn.addEventListener('click', () => {
+                  document.documentElement.classList.toggle('dark');
+                  localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                  updateThemeIcon();
+              });
+              searchInput.addEventListener('input', handleSearch);
+              searchInputMobile.addEventListener('input', handleSearchMobile);
+              loadTheme();
+              renderCategoryCards();
+              checkInitialMicPermission();
+          }
+          
+          function loadTheme() {
+              if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+              updateThemeIcon();
+          }
+
+          function updateThemeIcon() {
+              themeToggleBtn.innerHTML = document.documentElement.classList.contains('dark') 
+                  ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0015.354 20.354z" /></svg>` 
+                  : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 icon text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`;
+          }
+
+          // API Pública
+          return {
+              initializeApp, showAppContent, updateAuthUI, updateCategoryStats, openAuthModal,
+              closeAuthModal, toggleAuthForm, speakTextByIndex, startSpeechRecognition,
+              getState: () => appState, showPresentation, goBackToCategories, goBackToLessons,
+              selectVoice, setGlobalSpeed, showLessonsView, selectLesson, startInteractiveLesson,
+              toggleLessonComplete, requestMicPermission
+          };
+      })();
+
+      // Funciones globales para onclick
+      window.loginWithGoogle = function() { window.authFunctions.loginWithGoogle(); }
+      window.closeAuthModal = function(event, force) { window.appLogic.closeAuthModal(event, force); }
+      window.toggleAuthForm = function() { window.appLogic.toggleAuthForm(); }
+      window.goBackToCategories = function() { window.appLogic.goBackToCategories(); }
+      window.goBackToLessons = function() { window.appLogic.goBackToLessons(); }
+      window.selectVoice = function(gender) { window.appLogic.selectVoice(gender); }
+      window.setGlobalSpeed = function(el) { window.appLogic.setGlobalSpeed(el); }
+      
+      function getFirebaseErrorMessage(error) {
+          switch (error.code) {
+              case 'auth/invalid-email': return 'El formato del correo electrónico no es válido.';
+              case 'auth/user-not-found':
+              case 'auth/wrong-password': return 'Correo o contraseña incorrectos.';
+              case 'auth/email-already-in-use': return 'Este correo electrónico ya está registrado.';
+              case 'auth/weak-password': return 'La contraseña debe tener al menos 6 caracteres.';
+              case 'auth/popup-closed-by-user':
+              case 'auth/cancelled-popup-request': return 'La ventana de inicio de sesión fue cerrada.';
+              case 'auth/network-request-failed': return 'Error de red. Revisa tu conexión a internet.';
+              default: return 'Ocurrió un error. Inténtalo de nuevo.';
+          }
+      }
+
+      // --- LÓGICA DE INICIALIZACIÓN Y AUTENTICACIÓN ---
+      
+      onAuthStateChanged(auth, (user) => {
+          if (!window.appLogic) return;
+          const appState = window.appLogic.getState();
+          
+          if (user) {
+              appState.currentUser = {
+                  name: user.displayName,
+                  email: user.email,
+                  uid: user.uid,
+                  photoURL: user.photoURL,
+                  isAnonymous: user.isAnonymous
+              };
+          } else {
+              appState.currentUser = null;
+          }
+          
+          window.appLogic.updateAuthUI();
+          window.appLogic.updateCategoryStats();
+
+          const isAppVisible = !document.getElementById('app-content').classList.contains('hidden');
+          if (!user && isAppVisible) {
+              window.appLogic.showPresentation();
+          }
+      });
+
+      (async () => {
+          // Primero, inicializa la UI para que todo esté listo.
+          window.appLogic.initializeApp();
+          
+          try {
+              // Luego, revisa si hay un resultado de redirect de Google.
+              const result = await getRedirectResult(auth);
+              if (result) {
+                  // Si hay un resultado, significa que el usuario acaba de iniciar sesión.
+                  // Ahora podemos mostrar el contenido de la app.
+                  console.log("Inicio de sesión con Google Redirect exitoso.");
+                  window.appLogic.showAppContent();
+              }
+              // Si no hay resultado, no hacemos nada. La app se quedará en la
+              // pantalla de bienvenida esperando una acción del usuario.
+          } catch (error) {
+              console.error("Error al procesar el redirect de Google:", error);
+          }
+      })();
+    </script>
+</body>
+</html>
